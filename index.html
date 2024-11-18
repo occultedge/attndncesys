@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance System with PIN Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        select, input, .button {
+            padding: 10px;
+            margin-right: 10px;
+        }
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .export-btn {
+            background-color: #2196F3;
+        }
+        .export-btn:hover {
+            background-color: #0b7dda;
+        }
+    </style>
+</head>
+<body>
+    <h1>Attendance System with PIN Verification</h1>
+    <label for="students">Select Student:</label>
+    <select id="students">
+        <option value="" disabled selected>Select a student</option>
+        <option value="John Doe">John Doe</option>
+        <option value="Jane Smith">Jane Smith</option>
+        <option value="Alice Johnson">Alice Johnson</option>
+        <option value="Bob Brown">Bob Brown</option>
+    </select>
+    <label for="pin">Enter PIN:</label>
+    <input type="password" id="pin" placeholder="Enter your PIN">
+    <button class="button" onclick="markAttendance()">Mark Attendance</button>
+    <button class="button export-btn" onclick="exportData()">Export Data</button>
+
+    <h2>Attendance List</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody id="attendanceTable">
+        </tbody>
+    </table>
+
+    <script>
+        const attendanceTable = document.getElementById('attendanceTable');
+
+        // Predefined PINs for students
+        const pinData = { 
+            "John Doe": "1234", 
+            "Jane Smith": "5678",
+            "Alice Johnson": "9101",
+            "Bob Brown": "1121"
+        };
+
+        // Load existing attendance data from local storage
+        const loadAttendance = () => {
+            const attendanceData = JSON.parse(localStorage.getItem('attendance')) || [];
+            attendanceTable.innerHTML = '';
+            attendanceData.forEach((entry, index) => {
+                const row = `<tr>
+                    <td>${index + 1}</td>
+                    <td>${entry.name}</td>
+                    <td>${entry.status}</td>
+                    <td>${entry.time}</td>
+                </tr>`;
+                attendanceTable.innerHTML += row;
+            });
+        };
+
+        // Mark attendance with PIN verification
+        const markAttendance = () => {
+            const studentSelect = document.getElementById('students');
+            const pin = document.getElementById('pin').value.trim();
+            const name = studentSelect.value;
+
+            if (!name || !pin) {
+                alert('Please select a student and enter the PIN!');
+                return;
+            }
+
+            if (pinData[name] !== pin) {
+                alert('Incorrect PIN! Please try again.');
+                return;
+            }
+
+            const attendanceData = JSON.parse(localStorage.getItem('attendance')) || [];
+            const currentTime = new Date().toLocaleString();
+
+            attendanceData.push({
+                name,
+                status: 'Present',
+                time: currentTime
+            });
+
+            localStorage.setItem('attendance', JSON.stringify(attendanceData));
+            document.getElementById('students').value = '';
+            document.getElementById('pin').value = '';
+            loadAttendance();
+        };
+
+        // Export attendance data to CSV
+        const exportData = () => {
+            const attendanceData = JSON.parse(localStorage.getItem('attendance')) || [];
+            if (attendanceData.length === 0) {
+                alert('No attendance data to export!');
+                return;
+            }
+
+            let csvContent = 'Name,Status,Time\n'; // CSV Header
+            attendanceData.forEach(entry => {
+                csvContent += `${entry.name},${entry.status},${entry.time}\n`;
+            });
+
+            // Create a Blob and a temporary download link
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'attendance.csv';
+            link.click();
+        };
+
+        // Initialize table on load
+        loadAttendance();
+    </script>
+</body>
+</html>
